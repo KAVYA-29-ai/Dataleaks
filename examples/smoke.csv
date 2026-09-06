@@ -1,0 +1,6 @@
+customer_id,leaky_id,monthly_spend,support_calls,target_leak,churn
+CUST9,ID9,15.0,3,1.0,1
+CUST10,ID99,58.7,1,0.0,0
+CUST11,ID11,40.2,0,0.0,0
+CUST12,ID12,70.1,2,1.0,1
+CUST13,ID13,33.3,1,0.0,0
