@@ -1,201 +1,187 @@
-<div align="center">
-
 # 🔍 DataLeaks
 
-### Automatic Data Leakage Detection for Machine Learning
+**Automatic data leakage detection for machine learning workflows.**
 
-**Find leakage before it silently invalidates your model.**
+> Find leakage before it silently invalidates your model.
 
-[![PyPI](https://img.shields.io/pypi/v/dataleaks?style=for-the-badge&logo=pypi)](https://pypi.org/project/dataleaks/)
-[![Python](https://img.shields.io/pypi/pyversions/dataleaks?style=for-the-badge&logo=python)](https://pypi.org/project/dataleaks/)
-[![Tests](https://img.shields.io/badge/tests-521%20passed-success?style=for-the-badge)](#testing)
-[![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/dataleaks)](https://pypi.org/project/dataleaks/)
+[![Python](https://img.shields.io/pypi/pyversions/dataleaks)](https://pypi.org/project/dataleaks/)
+[![Tests](https://img.shields.io/badge/tests-521%20passed-success)](https://github.com/KAVYA-29-ai/Dataleaks)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-**Dataset → Detection → Findings → Risk → Recommendations**
-
-</div>
-
----
-
-## 🚨 Why DataLeaks?
-
-A machine learning model can achieve excellent validation performance while
-being fundamentally unreliable because information from the target, future,
-evaluation data, or downstream workflow has leaked into the training process.
-
-Common examples:
-
-- A feature directly contains the target.
-- A feature is mathematically derived from the target.
-- The same entities appear in train and test.
-- A feature contains information from the future.
-- Preprocessing is fitted on the complete dataset before splitting.
-- Training preprocessing is contaminated by held-out data.
-- An identifier creates cross-split information leakage.
-- A post-outcome feature is accidentally used for prediction.
-
-**DataLeaks automatically analyzes these patterns and converts suspicious
-signals into structured, explainable findings.**
+DataLeaks analyzes datasets and ML workflow metadata for signals of target,
+split, temporal, preprocessing, identifier, feature, and cross-dataset leakage.
+It returns structured, explainable findings with severity, confidence, evidence,
+risk scoring, and remediation recommendations.
 
 ---
 
-# ✨ Features
+## Why DataLeaks?
 
-| Capability | What DataLeaks Checks |
-|---|---|
-| 🎯 **Target Leakage** | Direct, statistical, and derived-target relationships |
-| 🔀 **Split Leakage** | Duplicate, near-duplicate, and overlapping values |
-| 🆔 **Identifier Leakage** | Identifier-like features and cross-split entity overlap |
-| 🕵️ **Suspicious Features** | Strong feature-target relationships and semantic signals |
-| ⏱️ **Temporal Leakage** | Future timestamps and chronological ordering |
-| 🚧 **Preprocessing Leakage** | Fit-before-split and held-out-data contamination |
-| 🌐 **Cross-Dataset Leakage** | Overlap between reference datasets |
-| 🧪 **Schema Validation** | Missing columns, dtype mismatches, and target validation |
-| 📊 **Risk Scoring** | Severity × confidence based risk assessment |
-| 💡 **Recommendations** | Actionable remediation guidance |
-| 📋 **Reporting** | Console and machine-readable JSON |
-| ⚙️ **Execution Tracking** | Completed, failed, and skipped detectors |
-| 🐍 **Python API** | Programmatic integration |
-| 💻 **CLI** | One-command dataset analysis |
+A model can achieve excellent validation performance while being fundamentally
+unreliable because information from the target, future, evaluation data, or a
+downstream workflow has leaked into the training process.
+
+DataLeaks is designed to surface these signals **before they silently distort
+model evaluation or production performance**.
+
+## What it detects
+
+| Area | Checks |
+| --- | --- |
+| 🎯 Target leakage | Direct, statistical, and derived-target relationships |
+| 🔀 Split leakage | Exact duplicates, near-duplicates, overlapping values, entity overlap |
+| 🆔 Identifier leakage | Identifier-like features and cross-split identifier overlap |
+| 🕵️ Suspicious features | Strong feature-target relationships and semantic leakage signals |
+| ⏱️ Temporal leakage | Invalid timestamps, ordering issues, and future feature timestamps |
+| 🚧 Preprocessing leakage | Fit-before-split and held-out-data contamination |
+| 🌐 Cross-dataset leakage | Shared entities and values across dataset boundaries |
+| 🧪 Schema validation | Target presence, missing columns, and dtype mismatches |
+| 📊 Risk scoring | Severity × confidence assessment |
+| 💡 Recommendations | Actionable remediation guidance |
+| 📋 Reporting | Console and JSON output |
+| ⚙️ Execution tracking | Completed, failed, and skipped detectors |
+| 🐍 Python API | Programmatic integration |
+| 💻 CLI | One-command analysis |
 
 ---
 
-# 📦 Installation
-
-Install DataLeaks directly from PyPI:
+## Installation
 
 ```bash
 pip install dataleaks
+```
 
-⚡ Quick Start
+**Python:** 3.10+
+
+## Quick start
+
+```python
 import pandas as pd
-
 from dataleaks import DataLeaks
 
 df = pd.read_csv("train.csv")
 
-report = DataLeaks(
-    df,
-    target="target",
-).run()
+report = DataLeaks(df, target="target").run()
 
 print("Risk:", report.risk_level)
 print("Score:", report.risk_score)
 print("Findings:", report.finding_count)
 
 for finding in report.findings:
-    print(
-        finding.detector,
-        finding.severity,
-        finding.explanation,
-    )
+    print(finding.detector, finding.severity)
+    print(finding.explanation)
+```
 
-The workflow is intentionally simple:
-
+```text
 Dataset
-   ↓
+  ↓
 DataLeaks(...)
-   ↓
+  ↓
 .run()
-   ↓
+  ↓
 LeakageReport
-💻 CLI
+```
 
-DataLeaks can also be used directly from the terminal.
+---
 
-Basic analysis
+## CLI
+
+```bash
+# Basic analysis
 dataleaks train.csv --target target
-Train / validation / test
+
+# Train / validation / test
 dataleaks train.csv --target target --validation validation.csv --test test.csv
-JSON output
+
+# JSON output
 dataleaks train.csv --target target --output json
-🎯 Target Leakage
+```
 
-Target leakage occurs when a feature contains information that directly or
-indirectly reveals the prediction target.
+---
 
-DataLeaks checks multiple forms of target leakage.
+## Target leakage
 
-Direct leakage
+Target leakage occurs when a feature directly or indirectly reveals the value
+being predicted.
+
+### Direct
+
+```text
 target = churn
 leaky_feature = churn
+```
 
-A feature that directly reproduces the target is a strong leakage signal.
-
-Statistical leakage
+### Statistical
 
 Extremely strong numerical relationships between a feature and the target are
 flagged for investigation.
 
-Derived-target leakage
+### Derived target
 
-DataLeaks can identify deterministic relationships such as:
-
+```text
 leaky_feature = 1 × target + 0
+```
 
-These relationships can make model performance appear unrealistically strong.
+Deterministic relationships can make model performance appear unrealistically
+strong.
 
-🔀 Split Leakage
+---
+
+## Split leakage
 
 DataLeaks analyzes relationships between training, validation, and test data.
+It checks for duplicate, near-duplicate, overlapping, and entity-level patterns.
 
-It checks for:
-
-Exact duplicate rows
-Near-duplicate rows
-Overlapping values
-Entity overlap
-Suspicious identifier overlap
-
-Example:
-
+```text
 TRAIN                    TEST
 
 customer_id              customer_id
 CUST1001   ────────────► CUST1001
 CUST1002   ────────────► CUST1002
 CUST1003                  CUST1007
+```
 
 When the same real-world entities appear across training and evaluation data,
 model evaluation can become unreliable.
 
-🆔 Identifier Leakage
+---
+
+## Identifier leakage
 
 Identifiers can become leakage channels when entities overlap across dataset
 boundaries.
 
-Examples include:
-
+```text
 customer_id
 user_id
 patient_id
 transaction_id
 device_id
+```
 
-DataLeaks intentionally does not treat high cardinality alone as proof of
-identifier leakage.
+High cardinality alone is **not** treated as proof of identifier leakage.
+Identifier-like semantics and explicit metadata keep this detection conservative.
 
-Identifier-like semantics and explicit metadata are used to make this detection
-more conservative.
+---
 
-🕵️ Suspicious & Post-Outcome Features
+## Suspicious and post-outcome features
 
 Some features contain information that only becomes available after the event
 being predicted.
 
-Examples include:
-
+```text
 future_purchase_value
 post_outcome_refund
 after_event_status
 forecast_revenue
 subsequent_transaction
+```
 
 DataLeaks combines statistical evidence with semantic signals to identify
 features that deserve investigation.
 
-Example:
-
+```text
 Prediction
     │
     ├──► Model Input
@@ -203,50 +189,59 @@ Prediction
     └──► Refund Processed
              ↑
         happens later
+```
 
 Using a later event as an input for an earlier prediction introduces leakage.
 
-⏱️ Temporal Leakage
+---
+
+## Temporal leakage
 
 Temporal leakage occurs when information that would not have been available at
 prediction time becomes part of the model input.
 
 DataLeaks can detect:
 
-Invalid timestamps
-Missing or unparsable timestamps
-Chronological ordering problems
-Feature timestamps occurring after prediction timestamps
-Future-feature relationships
-Conditional timestamp presence
-Chronological validation
+- Invalid or unparsable timestamps
+- Chronological ordering problems
+- Feature timestamps after prediction timestamps
+- Future-feature relationships
+- Conditional timestamp presence
+
+### Chronological validation
+
+```bash
 dataleaks train.csv --target target --time-column event_time
-Future-feature detection
+```
+
+### Future-feature detection
+
+```bash
 dataleaks train.csv --target target \
   --prediction-time-column prediction_time \
   --feature-time-columns signup_time outcome_time
+```
 
-DataLeaks compares feature timestamps with the prediction timestamp to identify
-information that would not have been available when the prediction was made.
+### Conditional timestamps
 
-Conditional timestamps
-
-Some timestamp fields are legitimately absent depending on the state or outcome
-of a record.
-
+```bash
 dataleaks train.csv --target target \
   --conditional-time-column outcome_time \
   --conditional-target-column target \
   --conditional-present-when 1
+```
 
-This allows expected conditional absence to be distinguished from genuinely
-invalid temporal data.
+Temporal metadata is supplied explicitly rather than guessed automatically.
 
-🚧 Preprocessing Leakage
+---
+
+## Preprocessing leakage
 
 Leakage can happen before model training even begins.
 
-❌ Incorrect
+### Incorrect
+
+```text
 Full Dataset
      │
      ▼
@@ -254,7 +249,11 @@ Preprocessing.fit()
      │
      ├──► Train
      └──► Test
-✅ Correct
+```
+
+### Correct
+
+```text
 Full Dataset
      │
      ▼
@@ -263,9 +262,11 @@ Train / Test Split
      ├──► Train → fit()
      │
      └──► Test  → transform()
+```
 
-DataLeaks can analyze preprocessing workflow metadata.
+DataLeaks can analyze preprocessing workflow metadata:
 
+```python
 metadata = {
     "preprocessing": {
         "fitted_on": "full_dataset",
@@ -278,12 +279,14 @@ report = DataLeaks(
     target="target",
     metadata=metadata,
 ).run()
+```
 
-This can identify:
+This can identify preprocessing fitted before the split and contamination by
+held-out data.
 
-Preprocessing fitted before the split
-Training preprocessing contaminated by held-out data
-🌐 Cross-Dataset Leakage
+---
+
+## Cross-dataset leakage
 
 DataLeaks can analyze overlap between datasets when reference data is supplied
 through the supported dataset context.
@@ -291,37 +294,39 @@ through the supported dataset context.
 This is useful for detecting shared entities or values that should remain
 isolated between datasets.
 
-📊 Risk Scoring
+---
 
-Every finding contains:
+## Risk scoring
 
-Severity
-Confidence
-Evidence
-Explanation
-Affected columns
-Recommendation
+Every finding includes:
 
-The finding score is based on:
+- Severity
+- Confidence
+- Evidence
+- Affected columns
+- Explanation
+- Recommendation
 
+The finding score is:
+
+```text
 severity_weight × confidence
-Severity weights
-Severity	Weight
-🟢 Low	0.25
-🟡 Medium	0.50
-🟠 High	0.75
-🔴 Critical	1.00
+```
 
-The overall risk score is driven by the strongest finding.
+| Severity | Weight |
+| --- | ---: |
+| 🟢 Low | 0.25 |
+| 🟡 Medium | 0.50 |
+| 🟠 High | 0.75 |
+| 🔴 Critical | 1.00 |
 
-This prevents many low-impact findings from hiding a single serious,
-high-confidence leakage problem.
+The overall risk score is driven by the **strongest finding**.
 
-🔎 Structured Findings
+---
 
-DataLeaks returns structured finding objects instead of forcing users to parse
-terminal output.
+## Structured findings
 
+```python
 for finding in report.findings:
     print("Detector:", finding.detector)
     print("Category:", finding.category)
@@ -331,91 +336,90 @@ for finding in report.findings:
     print("Evidence:", finding.evidence)
     print("Explanation:", finding.explanation)
     print("Recommendation:", finding.recommendation)
+```
 
-This makes the output suitable for:
+This makes the output suitable for Python applications, notebooks, CI/CD
+pipelines, automated quality gates, internal ML platforms, and dashboards.
 
-Python applications
-Notebooks
-CI/CD pipelines
-Automated quality gates
-Internal ML platforms
-Custom dashboards
-⚙️ Detector Execution
+---
 
-DataLeaks tracks the execution state of detectors.
+## Detector execution
 
-Supported states:
+DataLeaks tracks detector execution states:
 
+```text
 completed
 failed
 skipped
+```
 
-Inspect execution information through the report:
-
+```python
 print(report.completed_detectors)
 print(report.failed_detectors)
 print(report.skipped_detectors)
+```
 
-Detector failures are therefore visible instead of being silently interpreted as
-a clean analysis.
+Detector failures are visible rather than silently interpreted as a clean run.
 
-🧪 Schema Validation
+---
 
-DataLeaks validates important dataset assumptions before analysis.
+## Schema validation
 
-Validation includes:
+DataLeaks validates important dataset assumptions, including:
 
-Supported input type
-Target column existence
-Train/test schema compatibility
-Missing columns
-Dtype mismatches
-Target presence
+- Supported input type
+- Target column existence
+- Train/test schema compatibility
+- Missing columns
+- Dtype mismatches
+- Target presence
 
-For example:
+Example:
 
+```text
 Error: Target column 'churn' does not exist in the dataset
+```
 
-Invalid input should fail clearly rather than producing misleading leakage
-results.
+---
 
-📋 JSON Reporting
+## JSON reporting
 
-For automation and CI/CD:
-
+```bash
 dataleaks train.csv --target target --output json
+```
 
-The JSON report contains structured information about:
+The report contains structured information about risk, findings,
+recommendations, detector execution, schema validation, and metadata.
 
-Risk score
-Risk level
-Findings
-Recommendations
-Detector execution
-Schema validation
-Metadata
-🐍 Python API
+---
 
-The primary API:
+## Python API
 
+### Basic
+
+```python
 from dataleaks import DataLeaks
 
 report = DataLeaks(
     data,
     target="target",
 ).run()
+```
 
-Train / validation / test:
+### Train / validation / test
 
+```python
 report = DataLeaks(
     train,
     target="target",
     validation=validation,
     test=test,
 ).run()
+```
 
-Custom configuration:
+### Configuration
 
+```python
 from dataleaks import DataLeaks
 from dataleaks.schemas import DataLeaksConfig
 
@@ -433,73 +437,48 @@ report = DataLeaks(
     target="target",
     config=config,
 ).run()
-🧩 Architecture
+```
 
-DataLeaks follows an extensible detector architecture:
+---
 
-                         ┌───────────────┐
-                         │     Input     │
-                         └───────┬───────┘
-                                 │
-                                 ▼
-                         ┌───────────────┐
-                         │DatasetContext │
-                         └───────┬───────┘
-                                 │
-                                 ▼
-                         ┌───────────────┐
-                         │DetectorRegistry│
-                         └───────┬───────┘
-                                 │
-                                 ▼
-                         ┌───────────────┐
-                         │ DetectorRunner│
-                         └───────┬───────┘
-                                 │
-          ┌──────────────┬───────┼────────┬──────────────┐
-          ▼              ▼       ▼        ▼              ▼
-       Target          Split  Temporal  Feature     Preprocessing
-       Checks         Checks   Checks    Checks        Checks
-          │              │       │        │              │
-          └──────────────┴───────┴────────┴──────────────┘
-                                 │
-                                 ▼
-                            ┌──────────┐
-                            │ Findings │
-                            └────┬─────┘
-                                 │
-                                 ▼
-                           ┌───────────┐
-                           │Aggregation│
-                           └─────┬─────┘
-                                 │
-                                 ▼
-                            ┌─────────┐
-                            │ Scoring │
-                            └────┬────┘
-                                 │
-                                 ▼
-                        ┌────────────────┐
-                        │ Recommendations│
-                        └───────┬────────┘
-                                │
-                                ▼
-                         ┌───────────────┐
-                         │ LeakageReport │
-                         └───────┬───────┘
-                                 │
-                       ┌─────────┴─────────┐
-                       ▼                   ▼
-                    Console              JSON
+## Architecture
 
-Detectors implement a common interface and are managed through a detector
-registry, allowing the system to grow without redesigning the complete
-reporting and scoring pipeline.
+```text
+Input
+  ↓
+DatasetContext
+  ↓
+DetectorRegistry
+  ↓
+DetectorRunner
+  ↓
+┌──────────┬────────┬──────────┬─────────┬────────────────┐
+│ Target   │ Split  │ Temporal │ Feature │ Preprocessing  │
+│ Checks   │ Checks │ Checks   │ Checks  │ Checks         │
+└──────────┴────────┴──────────┴─────────┴────────────────┘
+  ↓
+Findings
+  ↓
+Aggregation
+  ↓
+Scoring
+  ↓
+Recommendations
+  ↓
+LeakageReport
+  ├── Console
+  └── JSON
+```
 
-⚙️ Configuration
+Detectors implement a common interface and are managed through a registry,
+allowing the system to grow without redesigning the reporting and scoring
+pipeline.
 
-Detector categories and analysis thresholds can be configured:
+---
 
+## Configuration
+
+```python
 from dataleaks.schemas import DataLeaksConfig
 
 config = DataLeaksConfig(
@@ -507,13 +486,17 @@ config = DataLeaksConfig(
     near_duplicate_threshold=0.95,
     confidence_threshold=0.5,
 )
+```
 
 Configuration values are validated to remain within supported ranges.
 
-🧪 Example Detection
+---
 
-Consider a dataset containing:
+## Example detection
 
+A dataset containing features such as:
+
+```text
 customer_id
 leaky_id
 tenure_months
@@ -521,9 +504,11 @@ monthly_charges
 target_leak_direct
 post_outcome_refund
 target
+```
 
-DataLeaks can produce findings such as:
+can produce findings such as:
 
+```text
 target_statistical
     HIGH
     Strong feature-target relationship detected
@@ -539,146 +524,112 @@ feature_suspicious
 feature_identifier
     MEDIUM
     Identifier-like feature detected
+```
 
-The findings are then aggregated into a single leakage risk assessment.
+---
 
-🧠 Design Principles
-Execution-first
+## Design principles
 
+**Execution-first**  
 Analyze actual dataset and workflow evidence rather than relying exclusively on
 static assumptions.
 
-Conservative detection
-
+**Conservative detection**  
 A suspicious signal is not automatically treated as proof of leakage.
 
-Explainability
+**Explainability**  
+Every finding should answer what happened, why it matters, and what to do next.
 
-Every finding should answer:
-
-What happened? Why does it matter? What should I do?
-
-Structured output
-
+**Structured output**  
 Findings are machine-readable objects that can be consumed by other systems.
 
-Extensibility
-
+**Extensibility**  
 New detectors can be added without redesigning the entire architecture.
 
-Production awareness
-
+**Production awareness**  
 Leakage can originate from datasets, splits, features, timestamps,
 preprocessing, identifiers, and workflow metadata.
 
-⚠️ Current Scope & Limitations
+---
 
-DataLeaks 0.1.0 focuses on dataset- and workflow-level leakage detection.
+## Current scope and limitations
 
-Some workflow-level checks require explicit metadata because operations performed
-outside the dataset cannot always be inferred reliably.
+DataLeaks `0.1.0` focuses on dataset- and workflow-level leakage detection.
 
-For example, preprocessing contamination requires information about how the
-preprocessing workflow was fitted.
+Some workflow-level checks require explicit metadata because operations
+performed outside the dataset cannot always be inferred reliably. Preprocessing
+contamination is one example.
 
-Temporal metadata is also explicitly supplied by the user rather than guessed
+Temporal metadata is explicitly supplied by the user rather than guessed
 automatically.
 
-This is intentional.
+> DataLeaks prefers explicit, explainable evidence over unsupported assumptions.
 
-DataLeaks prefers explicit, explainable evidence over unsupported assumptions.
+---
 
-🧪 Testing
+## Testing
 
-DataLeaks is heavily test-driven.
+**521 tests passed.**
 
-<div align="center">
-✅ 521 Tests Passed
-</div>
+The suite includes unit, integration, regression, adversarial, temporal,
+schema, execution, scoring, reporting, CLI, and packaging coverage.
 
-The test suite includes:
-
-Unit tests
-Integration tests
-Regression tests
-Adversarial datasets
-Target leakage cases
-Split leakage cases
-Temporal edge cases
-Timestamp parsing
-Preprocessing contamination
-Schema validation
-Detector execution
-Scoring
-Reporting
-CLI behavior
-Packaging
-
-Run the complete suite:
-
+```bash
 pytest -q -W error
-📦 Building From Source
+```
 
-Build the distributions:
+---
 
+## Building from source
+
+```bash
 python -m build
-
-This produces:
-
-dist/
-├── dataleaks-0.1.0-py3-none-any.whl
-└── dataleaks-0.1.0.tar.gz
-
-Validate them before publishing:
-
 python -m twine check --strict dist/*
-🛣️ Roadmap
+```
 
-DataLeaks 0.1.0 establishes the core leakage-detection engine.
+---
 
-Future releases will expand workflow-level capabilities:
+## Roadmap
 
-🔌 scikit-learn pipeline adapters
-🔌 Additional ML framework adapters
-🔍 Richer workflow introspection
-⏱️ Expanded temporal analysis
-🧬 Additional entity-resolution strategies
-🌐 Broader cross-dataset analysis
-🤖 CI/CD integrations
-📊 Additional reporting formats
-🔗 ML workflow integrations
+Future releases will expand workflow-level capabilities, including:
+
+- Scikit-learn pipeline adapters
+- Additional ML framework adapters
+- Richer workflow introspection
+- Expanded temporal analysis
+- Additional entity-resolution strategies
+- Broader cross-dataset analysis
+- CI/CD integrations
+- Additional reporting formats
+- ML workflow integrations
 
 The planned adapter architecture will allow DataLeaks to inspect complete ML
 workflows while preserving the same detector, scoring, and reporting system.
 
-🤝 Contributing
+---
+
+## Contributing
 
 Contributions, detector ideas, bug reports, and adversarial regression cases are
 welcome.
 
-When adding a detector, include:
-
-Detector implementation
-Unit tests
-Regression tests where appropriate
-Adversarial / false-positive tests where appropriate
-Clear evidence
-Explanation
-Actionable recommendation
+When adding a detector, include the implementation, tests, clear evidence, an
+explanation, and an actionable recommendation.
 
 Before submitting changes:
 
+```bash
 pytest -q -W error
-📄 License
+```
 
-DataLeaks is released under the MIT License.
+---
 
-See LICENSE.
+## License
 
-<div align="center">
-🔍 DataLeaks
-Find leakage before it finds your model.
+DataLeaks is released under the **MIT License**.
 
-Reliable leakage detection for machine learning workflows.
+See [LICENSE](LICENSE).
 
-</div> ```
+---
+
+**DataLeaks** — find leakage before it finds your model.
