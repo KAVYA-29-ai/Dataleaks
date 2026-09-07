@@ -41,6 +41,25 @@ class IdentifierLeakageDetector(BaseDetector):
         self.uniqueness_threshold = uniqueness_threshold
 
     @staticmethod
+    def _normalize_column_name(column: str) -> str:
+        normalized = re.sub(
+            r"([a-z0-9])([A-Z])",
+            r"\1_\2",
+            str(column),
+        )
+        normalized = re.sub(
+            r"[^a-zA-Z0-9]+",
+            "_",
+            normalized,
+        )
+        return normalized.strip("_").lower()
+
+    @classmethod
+    def _matches_identifier_pattern(cls, column: str) -> bool:
+        normalized = cls._normalize_column_name(column)
+        return bool(cls._IDENTIFIER_PATTERN.search(normalized))
+
+    @staticmethod
     def _safe_value(value: Any) -> str | None:
         """Return a bounded representation for evidence."""
 
@@ -76,9 +95,7 @@ class IdentifierLeakageDetector(BaseDetector):
             evidence.append(
                 {
                     "row_index": row_index,
-                    "identifier_value": self._safe_value(
-                        value
-                    ),
+                    "identifier_value": self._safe_value(value),
                 }
             )
 
@@ -125,13 +142,8 @@ class IdentifierLeakageDetector(BaseDetector):
                 / len(non_null)
             )
 
-            name_match = bool(
-                self._IDENTIFIER_PATTERN.search(column)
-            )
-
-            explicit_match = (
-                column in explicit_identifiers
-            )
+            name_match = self._matches_identifier_pattern(column)
+            explicit_match = column in explicit_identifiers
 
             # High cardinality alone is not enough.
             if not name_match and not explicit_match:
@@ -146,46 +158,26 @@ class IdentifierLeakageDetector(BaseDetector):
                 and column in context.test.columns
             ):
                 train_values = set(
-                    context.train[column]
-                    .dropna()
-                    .tolist()
+                    context.train[column].dropna().tolist()
                 )
-
                 test_values = set(
-                    context.test[column]
-                    .dropna()
-                    .tolist()
+                    context.test[column].dropna().tolist()
                 )
-
-                overlap_count = len(
-                    train_values.intersection(
-                        test_values
-                    )
-                )
+                overlap_count = len(train_values.intersection(test_values))
 
             if overlap_count > 0:
                 severity = "high"
-
-                confidence = min(
-                    1.0,
-                    max(
-                        uniqueness_ratio,
-                        0.5,
-                    ),
-                )
-
+                confidence = min(1.0, max(uniqueness_ratio, 0.5))
             elif uniqueness_ratio >= self.uniqueness_threshold:
                 severity = "medium"
                 confidence = uniqueness_ratio
-
             else:
                 severity = "low"
                 confidence = uniqueness_ratio
 
             explanation = (
                 f"Feature '{column}' appears to be identifier-like "
-                f"with a uniqueness ratio of "
-                f"{uniqueness_ratio:.4f}."
+                f"with a uniqueness ratio of {uniqueness_ratio:.4f}."
             )
 
             if overlap_count > 0:
@@ -205,20 +197,15 @@ class IdentifierLeakageDetector(BaseDetector):
                 "type": "identifier_like_feature",
                 "column": column,
                 "uniqueness_ratio": uniqueness_ratio,
+                "normalized_column_name": self._normalize_column_name(column),
                 "name_matches_identifier_pattern": name_match,
                 "explicit_identifier": explicit_match,
                 "train_test_overlap_count": overlap_count,
-                "uniqueness_threshold": (
-                    self.uniqueness_threshold
-                ),
-                "evidence_limit": (
-                    self.MAX_EVIDENCE_ROWS
-                ),
-                "row_evidence": (
-                    self._build_identifier_evidence(
-                        context,
-                        column,
-                    )
+                "uniqueness_threshold": self.uniqueness_threshold,
+                "evidence_limit": self.MAX_EVIDENCE_ROWS,
+                "row_evidence": self._build_identifier_evidence(
+                    context,
+                    column,
                 ),
             }
 
