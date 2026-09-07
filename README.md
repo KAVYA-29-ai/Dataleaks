@@ -554,7 +554,7 @@ preprocessing, identifiers, and workflow metadata.
 
 ## Current scope and limitations
 
-DataLeaks `0.1.0` focuses on dataset- and workflow-level leakage detection.
+DataLeaks `0.1.2` focuses on dataset- and workflow-level leakage detection.
 
 Some workflow-level checks require explicit metadata because operations
 performed outside the dataset cannot always be inferred reliably. Preprocessing
