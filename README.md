@@ -5,7 +5,7 @@
 > Find leakage before it silently invalidates your model.
 
 [![PyPI](https://img.shields.io/pypi/v/dataleaks)](https://pypi.org/project/dataleaks/)
-[![Python](https://img.shields.io/pypi/pyversions/dataleaks)](https://pypi.org/project/dataleaks/)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 [![Tests](https://img.shields.io/badge/tests-521%20passed-success)](https://github.com/KAVYA-29-ai/Dataleaks)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
